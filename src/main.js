@@ -27,9 +27,9 @@ function setLanguage(lang) {
     const logoImg = document.getElementById('logo-img');
     if (logoImg) {
         if (lang === 'es') {
-            logoImg.src = '/public/img/UN80_Logo_Lockup_white_S.png'; 
+            logoImg.src = 'img/UN80_Logo_Lockup_white_S.png'; 
         } else {
-            logoImg.src = '/public/img/UN80_Logo_Lockup_white_E.png'; 
+            logoImg.src = 'img/UN80_Logo_Lockup_white_E.png'; 
         }
     }
     
