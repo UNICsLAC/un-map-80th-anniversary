@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="initial-scale=1, user-scalable=no, width=device-width">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <title>Mapa - 80º Aniversario</title>
+</head>
+
+<body>
+  <div class="top-bar">
+    <div class="logo-section">
+      <img src="/public/img/UN80_Logo_Lockup_white_S.png" id="logo-img" alt="Logo">
+    </div>
+
+ <div class="language-selector">
+      <button onclick="setLanguage('es')" id="btn-es" class="active">
+        <i class="fas fa-globe"></i>
+        <span class="lang-full">ESPAÑOL</span>
+        <span class="lang-short">ES</span>
+      </button>
+      <button onclick="setLanguage('en')" id="btn-en">
+        <i class="fas fa-globe"></i>
+        <span class="lang-full">ENGLISH</span>
+        <span class="lang-short">EN</span>
+      </button>
+    </div>
+  </div>
+  </div>
+
+  <button class="sidebar-toggle" id="sidebar-toggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <div class="main-content">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>
+          <i class="fas fa-map-location-dot"></i>
+          <span data-label-countries>Países</span>
+          <span class="countries-count" id="countries-count">0</span>
+        </h2>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-input" placeholder="Buscar país...">
+        </div>
+      </div>
+      <div class="countries-list" id="countries-list"></div>
+    </div>
+
+    <div class="map-wrapper">
+      <div id="map-container"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
