@@ -400,7 +400,7 @@ async function loadDataAndInitMap() {
             throw new Error('API_KEY no está configurado');
         }
 
-        const response = await fetch('/countries.json');
+        const response = await fetch('countries.json');
         if (!response.ok) {
             throw new Error(`Error al cargar countries.json: ${response.status}`);
         }
