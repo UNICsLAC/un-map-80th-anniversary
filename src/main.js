@@ -82,6 +82,25 @@ function truncateText(text) {
     return text || '';
 }
 
+function getYouTubeEmbedUrl(url) {
+    if (!url) return null;
+    
+    const patterns = [
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
+        /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/
+    ];
+    
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+            return `https://www.youtube.com/embed/${match[1]}`;
+        }
+    }
+    
+    return null;
+}
+
 function getInfoWindowContent(country) {
     const isES = currentLanguage === 'es';
     const countryName = getFieldValue(country, 'Country');
@@ -92,6 +111,7 @@ function getInfoWindowContent(country) {
     const message = getFieldValue(country, 'Message');
     const presence = getFieldValue(country, 'Presence');
     const flagUrl = getCountryFlagUrl(country);
+    const youtubeUrl = getFieldValue(country, 'YoutubeUrl');
 
     let content = `
     <div class="info-window-modern">
@@ -104,6 +124,33 @@ function getInfoWindowContent(country) {
             </h2>
         </div>
 `;
+
+    if (youtubeUrl) {
+        const embedUrl = getYouTubeEmbedUrl(youtubeUrl);
+        if (embedUrl) {
+            content += `
+            <div class="info-section video-section">
+                <div class="section-content">
+                    <h3>
+                        <span class="section-icon"><i class="fa-brands fa-youtube"></i></span>
+                        ${isES ? 'Video' : 'Video'}
+                    </h3>
+                    <div class="video-container">
+                        <iframe 
+                            src="${embedUrl}" 
+                            width="100%" 
+                            height="250" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                            loading="lazy">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+    }
 
     if (year) {
         content += `
