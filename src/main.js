@@ -451,12 +451,12 @@ function initMap(countryData) {
     ];
 
     map = new google.maps.Map(document.getElementById("map-container"), {
-        center: { lat: -8, lng: -55 },
+        center: { lat: -5, lng: -70 },
         zoom: 3,
         styles: mapStyles,
         mapTypeControl: false,
         streetViewControl: false,
-        fullscreenControl: true,
+        fullscreenControl: false,
         zoomControl: true,
         gestureHandling: 'greedy'
     });
