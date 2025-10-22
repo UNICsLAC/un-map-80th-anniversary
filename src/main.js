@@ -8,6 +8,83 @@ let infowindow;
 let customMarkerIcon;
 let allCountries = [];
 
+const MODAL_DURATION = 10000;
+let modalTimer = null;
+let progressInterval = null;
+
+function initWelcomeModal() {
+    const modal = document.getElementById('welcome-modal');
+    const modalClose = document.getElementById('modal-close');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const btnExplore = document.getElementById('btn-explore');
+    const progressBar = document.getElementById('progress-bar');
+
+    if (localStorage.getItem('hideWelcomeModal') === 'true') {
+        modal.classList.add('hidden');
+        return;
+    }
+
+    updateModalLanguage();
+
+    modal.classList.remove('hidden');
+
+    let progress = 0;
+    const progressStep = 100 / (MODAL_DURATION / 100);
+
+    progressInterval = setInterval(() => {
+        progress += progressStep;
+        if (progress >= 100) {
+            closeModal();
+        } else {
+            progressBar.style.width = progress + '%';
+        }
+    }, 100);
+
+    function closeModal() {
+        clearInterval(progressInterval);
+        modal.classList.add('hidden');
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
+    btnExplore.addEventListener('click', closeModal);
+
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+}
+
+function updateModalLanguage() {
+    const isES = currentLanguage === 'es';
+
+    document.getElementById('modal-title').textContent = isES
+        ? '80 Años de Naciones Unidas en América Latina y el Caribe'
+        : '80 Years of United Nations in Latin America and the Caribbean';
+
+    document.getElementById('modal-description').textContent = isES
+        ? 'Los países de América Latina y el Caribe se han unido para conmemorar el 80º aniversario de las Naciones Unidas con la creación de un mapa interactivo. Los invitamos a explorar el impacto y el trabajo de la ONU en cada país de la región.'
+        : 'The countries of Latin America and the Caribbean have come together to commemorate the 80th anniversary of the United Nations with the creation of an interactive map. We invite you to explore the impact and work of the UN in each country in the region.';
+
+    document.getElementById('btn-explore-text').textContent = isES
+        ? 'Explorar Mapa'
+        : 'Explore Map';
+
+    const videoContainer = document.getElementById('modal-video-container');
+    const videoSrc = isES
+        ? 'video/UN_80th_Anniversary_No_Text_Square.mp4'
+        : 'video/UN_80th_Anniversary_No_Text_Square.mp4';
+
+    videoContainer.innerHTML = `
+        <video autoplay muted loop playsinline>
+            <source src="${videoSrc}" type="video/mp4">
+            Tu navegador no soporta el elemento de video.
+        </video>
+    `;
+}
+
 function getCountryFlagUrl(country) {
     const code = country.CountryCode?.toLowerCase();
     if (!code) {
@@ -17,25 +94,25 @@ function getCountryFlagUrl(country) {
 }
 
 function detectBrowserLanguage() {
-  const browserLang = navigator.language || navigator.userLanguage;
-  return browserLang.startsWith('es') ? 'es' : 'en';
+    const browserLang = navigator.language || navigator.userLanguage;
+    return browserLang.startsWith('es') ? 'es' : 'en';
 }
 
 function setLanguage(lang) {
     currentLanguage = lang;
-    
+
     const logoImg = document.getElementById('logo-img');
     if (logoImg) {
         if (lang === 'es') {
-            logoImg.src = 'img/UN80_Logo_Lockup_white_S.png'; 
+            logoImg.src = 'img/UN80_Logo_Lockup_white_S.png';
         } else {
-            logoImg.src = 'img/UN80_Logo_Lockup_white_E.png'; 
+            logoImg.src = 'img/UN80_Logo_Lockup_white_E.png';
         }
     }
-    
+
     const btnEs = document.getElementById('btn-es');
     const btnEn = document.getElementById('btn-en');
-    
+
     if (btnEs && btnEn) {
         if (lang === 'es') {
             btnEs.classList.add('active');
@@ -45,31 +122,37 @@ function setLanguage(lang) {
             btnEs.classList.remove('active');
         }
     }
-    
+
     const searchInput = document.getElementById('search-input');
     const labelCountries = document.querySelector('[data-label-countries]');
-    
+
     if (searchInput) {
         searchInput.placeholder = lang === 'es' ? 'Buscar país...' : 'Search country...';
     }
-    
+
     if (labelCountries) {
         labelCountries.textContent = lang === 'es' ? 'Países' : 'Countries';
     }
-    
+
     localStorage.setItem('preferredLanguage', lang);
-    
+
     if (infowindow) infowindow.close();
-    
+
+    updateModalLanguage();
+
     updateCountriesList();
 }
 
 window.setLanguage = setLanguage;
 
-window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
     const savedLang = localStorage.getItem('preferredLanguage');
     const initialLang = savedLang || detectBrowserLanguage();
     setLanguage(initialLang);
+
+    setTimeout(() => {
+        initWelcomeModal();
+    }, 500);
 });
 
 function getFieldValue(country, fieldBase) {
@@ -84,21 +167,46 @@ function truncateText(text) {
 
 function getYouTubeEmbedUrl(url) {
     if (!url) return null;
-    
+
     const patterns = [
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
         /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/
     ];
-    
+
     for (const pattern of patterns) {
         const match = url.match(pattern);
         if (match && match[1]) {
             return `https://www.youtube.com/embed/${match[1]}`;
         }
     }
-    
+
     return null;
+}
+
+function setupScrollIndicator() {
+    setTimeout(() => {
+        const infoWindowDiv = document.querySelector('.gm-style-iw-d');
+        const scrollIndicator = document.querySelector('.scroll-indicator-popup');
+
+        if (infoWindowDiv && scrollIndicator) {
+            const checkScroll = () => {
+                const scrollTop = infoWindowDiv.scrollTop;
+                const scrollHeight = infoWindowDiv.scrollHeight;
+                const clientHeight = infoWindowDiv.clientHeight;
+                const scrollBottom = scrollHeight - scrollTop - clientHeight;
+
+                if (scrollBottom < 80) {
+                    scrollIndicator.style.opacity = '0';
+                } else {
+                    scrollIndicator.style.opacity = '1';
+                }
+            };
+
+            checkScroll();
+            infoWindowDiv.addEventListener('scroll', checkScroll);
+        }
+    }, 100);
 }
 
 function getInfoWindowContent(country) {
@@ -236,7 +344,10 @@ function getInfoWindowContent(country) {
         `;
     }
 
-    content += `</div>`;
+    content += `</div>
+    <div class="scroll-indicator-popup">
+  <i class="fa-solid fa-chevron-down"></i>
+</div>`;
     return content;
 }
 
@@ -347,13 +458,12 @@ function initMap(countryData) {
         streetViewControl: false,
         fullscreenControl: true,
         zoomControl: true,
-        gestureHandling: 'greedy'  
-
+        gestureHandling: 'greedy'
     });
 
     infowindow = new google.maps.InfoWindow({
-        maxWidth: 450,
-        pixelOffset: new google.maps.Size(0, -40)
+        maxWidth: 700,
+        pixelOffset: new google.maps.Size(0, 0)
     });
 
     let markersCreated = 0;
@@ -386,6 +496,8 @@ function initMap(countryData) {
 
             marker.setAnimation(google.maps.Animation.BOUNCE);
             setTimeout(() => marker.setAnimation(null), 750);
+
+            setupScrollIndicator();
         });
 
         marker.addListener("mouseover", () => {
@@ -404,18 +516,17 @@ function initMap(countryData) {
         markersCreated++;
     });
 
-
     updateCountriesList();
 
     document.getElementById('search-input').addEventListener('input', updateCountriesList);
 
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
-    
+
     sidebarToggle.addEventListener('click', () => {
         const wasActive = sidebar.classList.contains('active');
         sidebar.classList.toggle('active');
-        
+
         if (!wasActive) {
             setTimeout(() => {
                 sidebarToggle.style.opacity = '0';
@@ -447,7 +558,7 @@ async function loadDataAndInitMap() {
             throw new Error('API_KEY no está configurado');
         }
 
-        const response = await fetch('countries.json');
+        const response = await fetch('data/countries.json');
         if (!response.ok) {
             throw new Error(`Error al cargar countries.json: ${response.status}`);
         }
