@@ -7,17 +7,54 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <title>Mapa - 80º Aniversario</title>
-  <script type="module" crossorigin src="/un-map-80th-anniversary/assets/index-BpOYN4uq.js"></script>
-  <link rel="stylesheet" crossorigin href="/un-map-80th-anniversary/assets/index-BXhmTMaa.css">
+  <script type="module" crossorigin src="/un-map-80th-anniversary/assets/index-hcPCIwFD.js"></script>
+  <link rel="stylesheet" crossorigin href="/un-map-80th-anniversary/assets/index-D2Va3xDV.css">
 </head>
 
 <body>
+  <div class="welcome-modal" id="welcome-modal">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <div class="modal-body">
+        <div class="modal-text">
+          <h2 id="modal-title">80 Años de Naciones Unidas en América Latina y el Caribe</h2>
+          <p id="modal-description">
+            Los países de América Latina y el Caribe se han unido para conmemorar el 80º aniversario de las Naciones
+            Unidas con la creación de un mapa interactivo.
+            Los invitamos a explorar el impacto y el trabajo de la ONU en cada país de laregión.
+          </p>
+          <div class="modal-actions">
+            <button class="btn-explore" id="btn-explore">
+              <span id="btn-explore-text">Explorar Mapa</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-video" id="modal-video-container">
+          <div class="video-placeholder">
+            <i class="fas fa-play-circle"></i>
+            <p id="video-placeholder-text">Video de presentación</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-progress">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="top-bar">
     <div class="logo-section">
       <img src="img/UN80_Logo_Lockup_white_S.png" id="logo-img" alt="Logo">
     </div>
 
- <div class="language-selector">
+    <div class="language-selector">
       <button onclick="setLanguage('es')" id="btn-es" class="active">
         <i class="fas fa-globe"></i>
         <span class="lang-full">ESPAÑOL</span>
@@ -29,7 +66,6 @@
         <span class="lang-short">EN</span>
       </button>
     </div>
-  </div>
   </div>
 
   <button class="sidebar-toggle" id="sidebar-toggle">
