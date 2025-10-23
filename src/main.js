@@ -447,18 +447,44 @@ function initMap(countryData) {
             featureType: "landscape",
             elementType: "geometry",
             stylers: [{ color: "#f5f5f5" }]
+        },
+        {
+            featureType: "water",
+            elementType: "labels",
+            stylers: [{ visibility: "off" }]
+        },
+        {
+            featureType: "administrative.country",
+            elementType: "labels",
+            stylers: [{ visibility: "on" }]
         }
     ];
 
+    const americasBounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(-60, -120),
+        new google.maps.LatLng(85, -30),
+    );
+
     map = new google.maps.Map(document.getElementById("map-container"), {
-        center: { lat: -5, lng: -70 },
-        zoom: 3,
+        zoom: 4,
         styles: mapStyles,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
         zoomControl: true,
-        gestureHandling: 'greedy'
+        gestureHandling: 'greedy',
+        minZoom: 0,
+        maxZoom: 20
+    });
+
+    map.setCenter({ lat: -15, lng: -60 });
+    map.setZoom(4);
+    
+    map.setOptions({
+        restriction: {
+            latLngBounds: americasBounds,
+            strictBounds: true
+        }
     });
 
     infowindow = new google.maps.InfoWindow({
