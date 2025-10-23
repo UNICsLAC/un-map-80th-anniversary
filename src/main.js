@@ -461,8 +461,8 @@ function initMap(countryData) {
     ];
 
     const americasBounds = new google.maps.LatLngBounds(
-        new google.maps.LatLng(-60, -120),
-        new google.maps.LatLng(85, -30),
+        new google.maps.LatLng(-60, -140),
+        new google.maps.LatLng(85, -20),
     );
 
     map = new google.maps.Map(document.getElementById("map-container"), {
