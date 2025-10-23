@@ -221,7 +221,7 @@ function getInfoWindowContent(country) {
     const youtubeUrl = getFieldValue(country, 'YoutubeUrl');
 
     let content = `
-    <div class="info-window-modern">
+    <div class="info-window-modern" >
         <div class="info-header">
             <div class="country-flag-large">
                 <img src="${flagUrl}" alt="${countryName}" class="flag-img-large" onerror="this.src='https://flagcdn.com/w80/un.png'">
