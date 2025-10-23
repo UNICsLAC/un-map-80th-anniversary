@@ -49,7 +49,6 @@ function initWelcomeModal() {
     modalOverlay.addEventListener('click', closeModal);
     btnExplore.addEventListener('click', closeModal);
 
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
             closeModal();
@@ -139,7 +138,7 @@ function setLanguage(lang) {
     if (infowindow) infowindow.close();
 
     updateModalLanguage();
-
+    updateDisclaimerLanguage();
     updateCountriesList();
 }
 
@@ -421,8 +420,43 @@ function cleanCoordinate(coord) {
     return isNaN(num) ? null : num;
 }
 
-function initMap(countryData) {
+function initDisclaimerAlert() {
+    const alertHTML = `
+        <div id="disclaimer-alert" class="disclaimer-alert">
+            <p id="disclaimer-text"></p>
+            <button id="close-disclaimer" class="close-disclaimer" aria-label="Close disclaimer">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+    `;
 
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+
+    const closeBtn = document.getElementById('close-disclaimer');
+    const alert = document.getElementById('disclaimer-alert');
+
+    updateDisclaimerLanguage();
+
+    closeBtn.addEventListener('click', () => {
+        alert.style.animation = 'slideDown 0.3s ease-out';
+        setTimeout(() => {
+            alert.remove();
+        }, 300);
+    });
+}
+
+function updateDisclaimerLanguage() {
+    const disclaimerText = document.getElementById('disclaimer-text');
+    if (!disclaimerText) return;
+
+    const isES = currentLanguage === 'es';
+    
+    disclaimerText.textContent = isES
+        ? 'Las denominaciones empleadas y la presentación del material en este mapa no implican la expresión de ninguna opinión por parte de la Secretaría de las Naciones Unidas sobre la condición jurídica de ningún país, territorio, ciudad o área o de sus autoridades, ni respecto de la delimitación de sus fronteras o límites.'
+        : 'The designations employed and the presentation of material on this map do not imply the expression of any opinion whatsoever on the part of the Secretariat of the United Nations concerning the legal status of any country, territory, city or area or its authorities, or concerning the delimitation of its frontiers or boundaries.';
+}
+
+function initMap(countryData) {
     allCountries = countryData;
 
     customMarkerIcon = {
@@ -579,7 +613,6 @@ function initMap(countryData) {
 
 async function loadDataAndInitMap() {
     try {
-
         if (!API_KEY) {
             throw new Error('API_KEY no está configurado');
         }
@@ -593,6 +626,7 @@ async function loadDataAndInitMap() {
 
         window.initGoogleMap = function () {
             initMap(data);
+            initDisclaimerAlert();
         };
 
         const script = document.createElement('script');
