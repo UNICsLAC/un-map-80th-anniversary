@@ -1,11 +1,9 @@
 import './style.css';
-const API_KEY = import.meta.env.VITE_API_KEY;
 
 let map;
 let currentLanguage = 'es';
 let markers = [];
-let infowindow;
-let customMarkerIcon;
+let popup;
 let allCountries = [];
 
 const MODAL_DURATION = 10000;
@@ -126,16 +124,21 @@ function setLanguage(lang) {
     const labelCountries = document.querySelector('[data-label-countries]');
 
     if (searchInput) {
-        searchInput.placeholder = lang === 'es' ? 'Buscar país...' : 'Search country...';
+        searchInput.placeholder = lang === 'es' ? 'Buscar Estados y Territorios...' : 'Search States and Territories...';
     }
 
     if (labelCountries) {
-        labelCountries.textContent = lang === 'es' ? 'Países' : 'Countries';
+        labelCountries.textContent = lang === 'es' ? 'Estados y Territorios' : 'States and Territories';
     }
 
     localStorage.setItem('preferredLanguage', lang);
 
-    if (infowindow) infowindow.close();
+    if (map) map.closePopup();
+
+    markers.forEach(marker => {
+        const content = getInfoWindowContent(marker.countryData);
+        marker.setPopupContent(content);
+    });
 
     updateModalLanguage();
     updateDisclaimerLanguage();
@@ -185,14 +188,14 @@ function getYouTubeEmbedUrl(url) {
 
 function setupScrollIndicator() {
     setTimeout(() => {
-        const infoWindowDiv = document.querySelector('.gm-style-iw-d');
+        const popupContent = document.querySelector('.leaflet-popup-content');
         const scrollIndicator = document.querySelector('.scroll-indicator-popup');
 
-        if (infoWindowDiv && scrollIndicator) {
+        if (popupContent && scrollIndicator) {
             const checkScroll = () => {
-                const scrollTop = infoWindowDiv.scrollTop;
-                const scrollHeight = infoWindowDiv.scrollHeight;
-                const clientHeight = infoWindowDiv.clientHeight;
+                const scrollTop = popupContent.scrollTop;
+                const scrollHeight = popupContent.scrollHeight;
+                const clientHeight = popupContent.clientHeight;
                 const scrollBottom = scrollHeight - scrollTop - clientHeight;
 
                 if (scrollBottom < 80) {
@@ -203,7 +206,7 @@ function setupScrollIndicator() {
             };
 
             checkScroll();
-            infoWindowDiv.addEventListener('scroll', checkScroll);
+            popupContent.addEventListener('scroll', checkScroll);
         }
     }, 100);
 }
@@ -222,6 +225,9 @@ function getInfoWindowContent(country) {
 
     let content = `
     <div class="info-window-modern" >
+        <button class="custom-close-button" onclick="this.closest('.leaflet-popup-content-wrapper').parentElement.remove()">
+            <i class="fa-solid fa-times"></i>
+        </button>
         <div class="info-header">
             <div class="country-flag-large">
                 <img src="${flagUrl}" alt="${countryName}" class="flag-img-large" onerror="this.src='https://flagcdn.com/w80/un.png'">
@@ -388,6 +394,7 @@ function updateCountriesList() {
                 <div class="country-year">${currentLanguage === 'es' ? 'Año: ' : 'Year: '}${year}</div>
             </div>
         `;
+
         item.onclick = () => selectCountry(country);
         countriesList.appendChild(item);
     });
@@ -396,14 +403,26 @@ function updateCountriesList() {
 function selectCountry(country) {
     const marker = markers.find(m => m.countryData === country);
     if (marker) {
-        map.panTo(marker.position);
-        map.setZoom(6);
-
-        google.maps.event.trigger(marker, 'click');
+        resetAllMarkers();
+        
+        map.closePopup();
+        
+        map.setView(marker.getLatLng(), 6);
+        
+        setTimeout(() => {
+            const content = getInfoWindowContent(country);
+            marker.setPopupContent(content);
+            marker.openPopup();
+            
+            setTimeout(() => {
+                setupScrollIndicator();
+            }, 150);
+        }, 300);
 
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
-        if (sidebar.classList.contains('active')) {
+
+        if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
             sidebar.classList.remove('active');
             sidebarToggle.style.opacity = '1';
             sidebarToggle.style.pointerEvents = 'auto';
@@ -450,130 +469,138 @@ function updateDisclaimerLanguage() {
     if (!disclaimerText) return;
 
     const isES = currentLanguage === 'es';
-    
+
     disclaimerText.textContent = isES
-        ? 'Las denominaciones empleadas y la presentación del material en este mapa no implican la expresión de ninguna opinión por parte de la Secretaría de las Naciones Unidas sobre la condición jurídica de ningún país, territorio, ciudad o área o de sus autoridades, ni respecto de la delimitación de sus fronteras o límites.'
-        : 'The designations employed and the presentation of material on this map do not imply the expression of any opinion whatsoever on the part of the Secretariat of the United Nations concerning the legal status of any country, territory, city or area or its authorities, or concerning the delimitation of its frontiers or boundaries.';
+        ? `"Los límites y nombres que aparecen en este mapa, así como las denominaciones utilizadas, no implican su reconocimiento o aceptación oficial por parte de las Naciones Unidas.
+    La frontera definitiva entre la República de Sudán y la República de Sudán del Sur aún no se ha determinado.
+            * Territorio no autónomo.
+            ** La línea punteada representa aproximadamente la línea de control en Jammu y Cachemira acordada por la India y Pakistán. Las partes aún no han acordado el estatus definitivo de Jammu y Cachemira.
+            *** Existe una disputa entre los Gobiernos de Argentina y el Reino Unido de Gran Bretaña e Irlanda del Norte sobre la soberanía de las Islas Malvinas (Falkland).`
+        : `"The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.
+            Final boundary between the Republic of Sudan and the Republic of South Sudan has not yet been determined.
+            * Non-Self-Governing Territory
+            ** Dotted line represents approximately the Line of Control in Jammu and Kashmir agreed upon by India and Pakistan. The final status of Jammu and Kashmir has not yet been agreed upon by the parties.
+            *** A dispute exists between the Governments of Argentina and the United Kingdom of Great Britain and Northern Ireland concerning sovereignty over the Falkland Islands (Malvinas)"`;
 }
 
 function initMap(countryData) {
     allCountries = countryData;
 
-    customMarkerIcon = {
-        path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
-        fillColor: '#0066CC',
-        fillOpacity: 1,
-        strokeColor: '#FFFFFF',
-        strokeWeight: 2,
-        scale: 1.8,
-        anchor: new google.maps.Point(12, 24),
-    };
-
-    const mapStyles = [
-        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-        { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-        {
-            featureType: "water",
-            elementType: "geometry",
-            stylers: [{ color: "#a8daff" }]
-        },
-        {
-            featureType: "landscape",
-            elementType: "geometry",
-            stylers: [{ color: "#f5f5f5" }]
-        },
-        {
-            featureType: "water",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-        },
-        {
-            featureType: "administrative.country",
-            elementType: "labels",
-            stylers: [{ visibility: "on" }]
-        }
-    ];
-
-    const americasBounds = new google.maps.LatLngBounds(
-        new google.maps.LatLng(-60, -140),
-        new google.maps.LatLng(85, -20),
-    );
-
-    map = new google.maps.Map(document.getElementById("map-container"), {
-        zoom: 4,
-        styles: mapStyles,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        zoomControl: true,
-        gestureHandling: 'greedy',
-        minZoom: 0,
-        maxZoom: 20
+    const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div class="marker-pin"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
     });
 
-    map.setCenter({ lat: -15, lng: -60 });
-    map.setZoom(4);
-    
-    map.setOptions({
-        restriction: {
-            latLngBounds: americasBounds,
-            strictBounds: true
-        }
+    const customIconHover = L.divIcon({
+        className: 'custom-marker hover',
+        html: '<div class="marker-pin"></div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 24]
     });
 
-    infowindow = new google.maps.InfoWindow({
-        maxWidth: 700,
-        pixelOffset: new google.maps.Size(0, 0)
+    map = L.map('map-container', {
+        zoomControl: false,
+        minZoom: 3,
+        maxZoom: 6,
+        tap: true,
+        touchZoom: true,
+        doubleClickZoom: true,
+        scrollWheelZoom: true
+    }).setView([-15, -60], 4);
+
+    L.esri.tiledMapLayer({
+        url: "https://geoservices.un.org/arcgis/rest/services/ClearMap_WebGray/MapServer",
+        minZoom: 3,
+        maxZoom: 6
+    }).addTo(map);
+
+    markers.forEach(marker => {
+        map.removeLayer(marker);
     });
+    markers = [];
 
-    let markersCreated = 0;
-
-    countryData.forEach(country => {
+    countryData.forEach((country, index) => {
         const lat = cleanCoordinate(country.Latitude);
         const lng = cleanCoordinate(country.Longitude);
 
         if (lat === null || lng === null) {
-            console.warn('Coordenadas inválidas para:', getFieldValue(country, 'Country'));
             return;
         }
 
-        const marker = new google.maps.Marker({
-            position: { lat, lng },
-            map,
+        const marker = L.marker([lat, lng], {
+            icon: customIcon,
             title: getFieldValue(country, 'Country'),
-            icon: customMarkerIcon,
-            animation: google.maps.Animation.DROP,
-            optimized: false
-        });
+            riseOnHover: false,
+            riseOffset: 0
+        }).addTo(map);
 
         marker.countryData = country;
+        marker.countryIndex = index;
+        marker.isHovered = false;
 
-        marker.addListener("click", () => {
-            infowindow.close();
-            const content = getInfoWindowContent(country);
-            infowindow.setContent(content);
-            infowindow.open(map, marker);
+        const content = getInfoWindowContent(country);
+        marker.bindPopup(content, {
+            maxWidth: 700,
+            className: 'custom-popup',
+            closeButton: false,
+            autoClose: false,
+            closeOnClick: false,
+            keepInView: false
+        });
 
-            marker.setAnimation(google.maps.Animation.BOUNCE);
-            setTimeout(() => marker.setAnimation(null), 750);
+        const handleMarkerClick = (e) => {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
 
+            map.closePopup();
+            resetAllMarkers();
+
+            marker.openPopup();
+            setupScrollIndicator();
+        };
+
+        marker.on('click', handleMarkerClick);
+
+        marker.on('touchend', (e) => {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+
+            map.closePopup();
+            resetAllMarkers();
+
+            marker.openPopup();
             setupScrollIndicator();
         });
 
-        marker.addListener("mouseover", () => {
-            marker.setIcon({
-                ...customMarkerIcon,
-                fillColor: '#0099FF',
-                scale: 2.2
-            });
+        marker.on('mouseover', () => {
+            if (!marker.isHovered) {
+                marker.setIcon(customIconHover);
+                marker.isHovered = true;
+            }
         });
 
-        marker.addListener("mouseout", () => {
-            marker.setIcon(customMarkerIcon);
+        marker.on('mouseout', () => {
+            if (marker.isHovered) {
+                marker.setIcon(customIcon);
+                marker.isHovered = false;
+            }
         });
 
         markers.push(marker);
-        markersCreated++;
+    });
+
+    map.on('click', (e) => {
+        if (e.originalEvent.target.classList.contains('leaflet-container') ||
+            e.originalEvent.target.classList.contains('leaflet-map-pane')) {
+            map.closePopup();
+            resetAllMarkers();
+        }
+    });
+
+    map.on('dragend', () => {
+        map.dragging.enable();
     });
 
     updateCountriesList();
@@ -583,23 +610,33 @@ function initMap(countryData) {
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar');
 
-    sidebarToggle.addEventListener('click', () => {
+    sidebarToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
         const wasActive = sidebar.classList.contains('active');
-        sidebar.classList.toggle('active');
 
-        if (!wasActive) {
-            setTimeout(() => {
-                sidebarToggle.style.opacity = '0';
-                sidebarToggle.style.pointerEvents = 'none';
-            }, 300);
-        } else {
+        if (wasActive) {
+            sidebar.classList.remove('active');
             sidebarToggle.style.opacity = '1';
             sidebarToggle.style.pointerEvents = 'auto';
+        } else {
+            sidebar.classList.add('active');
+            sidebarToggle.style.opacity = '0';
+            sidebarToggle.style.pointerEvents = 'none';
         }
     });
 
     document.getElementById('map-container').addEventListener('click', () => {
         if (sidebar.classList.contains('active')) {
+            sidebar.classList.remove('active');
+            sidebarToggle.style.opacity = '1';
+            sidebarToggle.style.pointerEvents = 'auto';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (sidebar.classList.contains('active') &&
+            !sidebar.contains(e.target) &&
+            !sidebarToggle.contains(e.target)) {
             sidebar.classList.remove('active');
             sidebarToggle.style.opacity = '1';
             sidebarToggle.style.pointerEvents = 'auto';
@@ -613,36 +650,16 @@ function initMap(countryData) {
 
 async function loadDataAndInitMap() {
     try {
-        if (!API_KEY) {
-            throw new Error('API_KEY no está configurado');
-        }
-
         const response = await fetch('data/countries.json');
         if (!response.ok) {
             throw new Error(`Error al cargar countries.json: ${response.status}`);
         }
 
         const data = await response.json();
-
-        window.initGoogleMap = function () {
-            initMap(data);
-            initDisclaimerAlert();
-        };
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&loading=async&callback=initGoogleMap`;
-        script.async = true;
-        script.defer = true;
-
-        script.onerror = () => {
-            document.getElementById("map-container").innerHTML =
-                `<div class="error-message">
-                    <h2>⚠️ Error al cargar Google Maps</h2>
-                    <p>Verificar API Key y configuración</p>
-                </div>`;
-        };
-
-        document.head.appendChild(script);
+        console.log('Loaded countries data:', data.length, 'countries');
+        initMap(data);
+        initDisclaimerAlert();
+        console.log('Created markers:', markers.length);
 
     } catch (error) {
         document.getElementById("map-container").innerHTML =
@@ -654,3 +671,63 @@ async function loadDataAndInitMap() {
 }
 
 loadDataAndInitMap();
+
+function resetAllMarkers() {
+    const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div class="marker-pin"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
+    });
+
+    markers.forEach(marker => {
+        marker.setIcon(customIcon);
+        marker.isHovered = false;
+    });
+}
+
+function ensureMapInteraction() {
+    if (map) {
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        map.boxZoom.enable();
+        map.keyboard.enable();
+    }
+}
+
+function handleMarkerInteraction(country) {
+    map.closePopup();
+
+    const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div class="marker-pin"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
+    });
+
+    markers.forEach(m => {
+        m.setIcon(customIcon);
+        m.isHovered = false;
+    });
+
+    const marker = markers.find(m => m.countryData === country);
+    if (marker) {
+        const content = getInfoWindowContent(country);
+        marker.bindPopup(content, {
+            maxWidth: 700,
+            className: 'custom-popup',
+            closeButton: false,
+            autoClose: false,
+            closeOnClick: false,
+            keepInView: true
+        }).openPopup();
+
+        setupScrollIndicator();
+
+        setTimeout(() => {
+            ensureMapInteraction();
+        }, 100);
+    }
+}

@@ -1,7 +1,7 @@
 [
   {
-    "Country_EN": "ANGUILLA",
-    "Country_ES": "ANGUILLA",
+    "Country_EN": "ANGUILLA*",
+    "Country_ES": "ANGUILLA*",
     "Latitude": "18.2208",
     "Longitude": "-63.0517",
     "Year_EN": "Anguilla is not a member state of the United Nations. It is a British Overseas Territory and has been on the UN list of Non-Self-Governing Territories since 1946, under the administration of the United Kingdom.",
@@ -146,8 +146,8 @@
     "YoutubeUrl_ES": "https://youtu.be/xIQieAIWQM8?si=HvG1zred2YnB6r2b"
   },
   {
-    "Country_EN": "BRITISH VIRGIN ISLANDS",
-    "Country_ES": "ISLAS VÍRGENES BRITÁNICAS",
+    "Country_EN": "BRITISH VIRGIN ISLANDS*",
+    "Country_ES": "ISLAS VÍRGENES BRITÁNICAS*",
     "Latitude": 18.4207,
     "Longitude": "-64.6399",
     "Year_EN": "The British Virgin Islands are not a UN member state, as they are a British Overseas Territory. However, they have been listed as a Non-Self-Governing Territory by the United Nations since 1946, under Article 73(e) of the UN Charter.",
