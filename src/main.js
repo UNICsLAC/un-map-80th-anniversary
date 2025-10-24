@@ -157,10 +157,24 @@ window.addEventListener('DOMContentLoaded', function () {
     }, 500);
 });
 
+
 function getFieldValue(country, fieldBase) {
     const field = currentLanguage === 'es' ? `${fieldBase}_ES` : `${fieldBase}_EN`;
-    const value = country[field];
-    return value && value !== '' && value !== null && value !== undefined ? value : null;
+    const rawValue = country[field];
+    
+    if (fieldBase === 'Country' && rawValue && rawValue.includes('*')) {
+        const formattedValue = toTitleCase(rawValue);
+        return formattedValue && formattedValue !== '' && formattedValue !== null && formattedValue !== undefined ? formattedValue : null;
+    }
+    
+    return rawValue && rawValue !== '' && rawValue !== null && rawValue !== undefined ? rawValue : null;
+}
+
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+        if (txt === '*' || txt === '(*' || txt === '*)') return txt;
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
 }
 
 function truncateText(text) {
