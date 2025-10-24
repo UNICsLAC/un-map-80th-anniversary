@@ -404,16 +404,16 @@ function selectCountry(country) {
     const marker = markers.find(m => m.countryData === country);
     if (marker) {
         resetAllMarkers();
-        
+
         map.closePopup();
-        
+
         map.setView(marker.getLatLng(), 6);
-        
+
         setTimeout(() => {
             const content = getInfoWindowContent(country);
             marker.setPopupContent(content);
             marker.openPopup();
-            
+
             setTimeout(() => {
                 setupScrollIndicator();
             }, 150);
@@ -470,17 +470,17 @@ function updateDisclaimerLanguage() {
 
     const isES = currentLanguage === 'es';
 
-    disclaimerText.textContent = isES
-        ? `"Los límites y nombres que aparecen en este mapa, así como las denominaciones utilizadas, no implican su reconocimiento o aceptación oficial por parte de las Naciones Unidas.
-    La frontera definitiva entre la República de Sudán y la República de Sudán del Sur aún no se ha determinado.
-            * Territorio no autónomo.
-            ** La línea punteada representa aproximadamente la línea de control en Jammu y Cachemira acordada por la India y Pakistán. Las partes aún no han acordado el estatus definitivo de Jammu y Cachemira.
-            *** Existe una disputa entre los Gobiernos de Argentina y el Reino Unido de Gran Bretaña e Irlanda del Norte sobre la soberanía de las Islas Malvinas (Falkland).`
-        : `"The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.
-            Final boundary between the Republic of Sudan and the Republic of South Sudan has not yet been determined.
-            * Non-Self-Governing Territory
-            ** Dotted line represents approximately the Line of Control in Jammu and Kashmir agreed upon by India and Pakistan. The final status of Jammu and Kashmir has not yet been agreed upon by the parties.
-            *** A dispute exists between the Governments of Argentina and the United Kingdom of Great Britain and Northern Ireland concerning sovereignty over the Falkland Islands (Malvinas)"`;
+    disclaimerText.innerHTML = isES
+        ? `Los límites y nombres que aparecen en este mapa, así como las denominaciones utilizadas, no implican su reconocimiento o aceptación oficial por parte de las Naciones Unidas.<br>
+  La frontera definitiva entre la República de Sudán y la República de Sudán del Sur aún no se ha determinado.<br>
+  * Territorio no autónomo.<br>
+  ** La línea punteada representa aproximadamente la línea de control en Jammu y Cachemira acordada por la India y Pakistán. Las partes aún no han acordado el estatus definitivo de Jammu y Cachemira.<br>
+  *** Existe una disputa entre los Gobiernos de Argentina y el Reino Unido de Gran Bretaña e Irlanda del Norte sobre la soberanía de las Islas Malvinas (Falkland).`
+        : `The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.<br>
+  Final boundary between the Republic of Sudan and the Republic of South Sudan has not yet been determined.<br>
+  * Non-Self-Governing Territory<br>
+  ** Dotted line represents approximately the Line of Control in Jammu and Kashmir agreed upon by India and Pakistan. The final status of Jammu and Kashmir has not yet been agreed upon by the parties.<br>
+  *** A dispute exists between the Governments of Argentina and the United Kingdom of Great Britain and Northern Ireland concerning sovereignty over the Falkland Islands (Malvinas).`;
 }
 
 function initMap(countryData) {
@@ -508,10 +508,10 @@ function initMap(countryData) {
         touchZoom: true,
         doubleClickZoom: true,
         scrollWheelZoom: true
-    }).setView([-15, -60], 4);
+    }).setView([-15, -70], 2);
 
     L.esri.tiledMapLayer({
-        url: "https://geoservices.un.org/arcgis/rest/services/ClearMap_WebGray/MapServer",
+        url: "https://geoservices.un.org/arcgis/rest/services/ClearMap_WebPlain/MapServer",
         minZoom: 3,
         maxZoom: 6
     }).addTo(map);
@@ -656,10 +656,8 @@ async function loadDataAndInitMap() {
         }
 
         const data = await response.json();
-        console.log('Loaded countries data:', data.length, 'countries');
         initMap(data);
         initDisclaimerAlert();
-        console.log('Created markers:', markers.length);
 
     } catch (error) {
         document.getElementById("map-container").innerHTML =
